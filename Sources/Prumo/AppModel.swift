@@ -6,10 +6,18 @@ enum LibrarySection: String, CaseIterable, Identifiable {
     case sessions, answers, skills
     var id: Self { self }
     var title: String {
-        switch self { case .sessions: "Sessions"; case .answers: "Ask your history"; case .skills: "Skills" }
+        switch self {
+        case .sessions: "Sessions";
+        case .answers: "Ask your history";
+        case .skills: "Skills"
+        }
     }
     var symbol: String {
-        switch self { case .sessions: "text.bubble"; case .answers: "sparkle.magnifyingglass"; case .skills: "square.stack.3d.up" }
+        switch self {
+        case .sessions: "text.bubble";
+        case .answers: "sparkle.magnifyingglass";
+        case .skills: "square.stack.3d.up"
+        }
     }
 }
 
@@ -40,8 +48,12 @@ final class AppModel {
         }
         return filtered.sorted { a, b in
             let left = skillUsage[a.id], right = skillUsage[b.id]
-            if skillSort == "most", left?.uses ?? 0 != right?.uses ?? 0 { return (left?.uses ?? 0) > (right?.uses ?? 0) }
-            if skillSort == "recent", left?.lastUsedMs ?? 0 != right?.lastUsedMs ?? 0 { return (left?.lastUsedMs ?? 0) > (right?.lastUsedMs ?? 0) }
+            if skillSort == "most", left?.uses ?? 0 != right?.uses ?? 0 {
+                return (left?.uses ?? 0) > (right?.uses ?? 0)
+            }
+            if skillSort == "recent", left?.lastUsedMs ?? 0 != right?.lastUsedMs ?? 0 {
+                return (left?.lastUsedMs ?? 0) > (right?.lastUsedMs ?? 0)
+            }
             if ["newest", "oldest"].contains(skillSort), a.addedMs != b.addedMs {
                 guard let left = a.addedMs else { return false }
                 guard let right = b.addedMs else { return true }
@@ -82,9 +94,15 @@ final class AppModel {
     init() {
         do {
             let override = ProcessInfo.processInfo.environment["PRUMO_DATA_DIR"]
-            let data = override.map { URL(fileURLWithPath: $0) } ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Prumo")
-            try FileManager.default.createDirectory(at: data, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-            if override == nil { try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: data.path) }
+            let data =
+                override.map { URL(fileURLWithPath: $0) }
+                ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("Prumo")
+            try FileManager.default.createDirectory(
+                at: data, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+            if override == nil {
+                try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: data.path)
+            }
             index = try SessionIndex(databasePath: data.appendingPathComponent("Library.sqlite").path)
         } catch {
             index = nil
@@ -137,7 +155,10 @@ final class AppModel {
             stats = try await Task.detached(priority: .utility) { try index.stats() }.value
             projects = try await Task.detached(priority: .utility) { try index.projects() }.value
             scanWarnings = report.warnings
-            scanSummary = report.cancelled ? "Refresh stopped. Indexed sessions are ready." : "\(stats.sessions.formatted()) sessions · \(stats.projects.formatted()) projects"
+            scanSummary =
+                report.cancelled
+                ? "Refresh stopped. Indexed sessions are ready."
+                : "\(stats.sessions.formatted()) sessions · \(stats.projects.formatted()) projects"
             if report.skipped > 0 { scanSummary += " · \(report.skipped) skipped" }
             revision += 1
             await loadSkills()
@@ -152,7 +173,9 @@ final class AppModel {
                 return
             } else if let index {
                 let query = query, agent = agentFilter, project = projectFilter, order = sessionOrder
-                let result = try await Task.detached(priority: .utility) { try index.search(query: query, agent: agent, project: project, limit: 300, order: order) }.value
+                let result = try await Task.detached(priority: .utility) {
+                    try index.search(query: query, agent: agent, project: project, limit: 300, order: order)
+                }.value
                 if identity == filterIdentity { hits = result }
             }
         } catch { if identity == filterIdentity { self.error = error.prumoDescription } }
@@ -188,8 +211,12 @@ final class AppModel {
         Task {
             defer { isManagingSkills = false }
             do {
-                let targets = action == .trash ? try await Task.detached { try store.prepareTrash(ids: applicable.map(\.id)) }.value : []
-                bulkReview = SkillBulkReview(action: action, skills: applicable, skipped: selected.count - applicable.count, trashTargets: targets)
+                let targets =
+                    action == .trash
+                    ? try await Task.detached { try store.prepareTrash(ids: applicable.map(\.id)) }.value : []
+                bulkReview = SkillBulkReview(
+                    action: action, skills: applicable, skipped: selected.count - applicable.count,
+                    trashTargets: targets)
             } catch { self.error = error.prumoDescription }
         }
     }
@@ -201,10 +228,13 @@ final class AppModel {
         let store = settings.makeSkillStore()
         Task {
             defer { isManagingSkills = false }
-            let result = await Task.detached(priority: .userInitiated) { SkillActions.perform(review: review, store: store) }.value
+            let result = await Task.detached(priority: .userInitiated) {
+                SkillActions.perform(review: review, store: store)
+            }.value
             selectedSkills.subtract(result.completed)
-            skillActionSummary = "\(result.completed.count) of \(review.skills.count) skills updated."
-            if review.skipped > 0 { skillActionSummary! += " \(review.skipped) ineligible skills skipped." }
+            var summary = "\(result.completed.count) of \(review.skills.count) skills updated."
+            if review.skipped > 0 { summary += " \(review.skipped) ineligible skills skipped." }
+            skillActionSummary = summary
             await loadSkills()
             if let selectedSkill { openSkill(selectedSkill) }
             if !result.failures.isEmpty { error = result.failures.joined(separator: "\n\n") }
@@ -235,7 +265,10 @@ final class AppModel {
         guard let index else { return }
         Task {
             do {
-                let position = try await Task.detached { try index.resolveCitation(key: hit.session.key, messageIndex: hit.messageIndex, messageDigest: hit.messageDigest) }.value
+                let position = try await Task.detached {
+                    try index.resolveCitation(
+                        key: hit.session.key, messageIndex: hit.messageIndex, messageDigest: hit.messageDigest)
+                }.value
                 section = .sessions
                 openSession(hit.session.key, message: position)
             } catch { self.error = error.prumoDescription }
@@ -281,7 +314,9 @@ final class AppModel {
         evidenceRequestID = requestID
         evidenceQuestion = question
         do {
-            let result = try await Task.detached(priority: .userInitiated) { try index.evidence(question: question, agent: agent, project: project) }.value
+            let result = try await Task.detached(priority: .userInitiated) {
+                try index.evidence(question: question, agent: agent, project: project)
+            }.value
             if evidenceRequestID == requestID { evidence = result }
         } catch { if evidenceRequestID == requestID { answerError = error.prumoDescription } }
         if evidenceRequestID == requestID { isFindingEvidence = false }
@@ -314,8 +349,9 @@ final class AppModel {
 
     func continueSession(_ session: SessionRow) {
         Task {
-            do { try await Continuation.open(session: session, settings: settings) }
-            catch { self.error = error.prumoDescription }
+            do { try await Continuation.open(session: session, settings: settings) } catch {
+                self.error = error.prumoDescription
+            }
         }
     }
 

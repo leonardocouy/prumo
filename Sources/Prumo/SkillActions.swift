@@ -36,15 +36,18 @@ struct SkillActionResult: Sendable {
 }
 
 enum SkillActions {
-    static func perform(review: SkillBulkReview, store: SkillStore,
-                        moveToTrash: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }) -> SkillActionResult {
+    static func perform(
+        review: SkillBulkReview, store: SkillStore,
+        moveToTrash: (URL) throws -> Void = { try FileManager.default.trashItem(at: $0, resultingItemURL: nil) }
+    ) -> SkillActionResult {
         var result = SkillActionResult()
         for skill in review.skills {
             do {
                 if review.action == .trash {
                     guard let expected = review.trashTargets.first(where: { $0.id == skill.id }),
-                          let current = try store.prepareTrash(ids: [skill.id]).first,
-                          current.revision == expected.revision, current.links == expected.links else {
+                        let current = try store.prepareTrash(ids: [skill.id]).first,
+                        current.revision == expected.revision, current.links == expected.links
+                    else {
                         throw AppFailure(message: "This skill or its links changed. Review it again before removal.")
                     }
                     try moveToTrash(URL(fileURLWithPath: current.id))
@@ -56,10 +59,13 @@ enum SkillActions {
                             if destination == link.destination {
                                 try FileManager.default.removeItem(at: url)
                             } else {
-                                result.failures.append("\(skill.name): folder moved, but a changed link was left in place: \(link.path)")
+                                result.failures.append(
+                                    "\(skill.name): folder moved, but a changed link was left in place: \(link.path)")
                             }
                         } catch {
-                            result.failures.append("\(skill.name): folder moved; could not remove link \(link.path): \(error.prumoDescription)")
+                            result.failures.append(
+                                "\(skill.name): folder moved; could not remove link \(link.path): \(error.prumoDescription)"
+                            )
                         }
                     }
                 } else {

@@ -24,40 +24,70 @@ struct SettingsView: View {
             Form {
                 if tab == 0 {
                     Section {
-                        PathSetting(title: "Codex data folder", detail: "Contains sessions and archived_sessions.", path: $draft.codexHome) { choose(.codex) }
-                        PathSetting(title: "Claude Code data folder", detail: "Contains projects. Custom profiles such as ~/.claude-work work here.", path: $draft.claudeHome) { choose(.claude) }
-                    } header: { Text("Session folders") } footer: {
-                        Text("Prumo reads these sessions without changing the original files.").foregroundStyle(PrumoTheme.secondary)
+                        PathSetting(
+                            title: "Codex data folder", detail: "Contains sessions and archived_sessions.",
+                            path: $draft.codexHome
+                        ) { choose(.codex) }
+                        PathSetting(
+                            title: "Claude Code data folder",
+                            detail: "Contains projects. Custom profiles such as ~/.claude-work work here.",
+                            path: $draft.claudeHome
+                        ) { choose(.claude) }
+                    } header: {
+                        Text("Session folders")
+                    } footer: {
+                        Text("Prumo reads these sessions without changing the original files.").foregroundStyle(
+                            PrumoTheme.secondary)
                     }
                     Section("Skill folders") {
-                        PathSetting(title: "Shared skills folder", detail: "Shared Codex skills and the default location for new skills.", path: $draft.sharedSkills) { choose(.shared) }
+                        PathSetting(
+                            title: "Shared skills folder",
+                            detail: "Shared Codex skills and the default location for new skills.",
+                            path: $draft.sharedSkills
+                        ) { choose(.shared) }
                         ForEach(draft.extraSkillRoots, id: \.self) { path in
                             HStack(alignment: .top, spacing: PrumoTheme.gap) {
                                 Text(path).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                                 Spacer(minLength: 0)
-                                Button("Remove skill folder", systemImage: "minus.circle") { draft.extraSkillRoots.removeAll { $0 == path } }
-                                    .labelStyle(.iconOnly).help("Remove \(path) from the library")
+                                Button("Remove skill folder", systemImage: "minus.circle") {
+                                    draft.extraSkillRoots.removeAll { $0 == path }
+                                }
+                                .labelStyle(.iconOnly).help("Remove \(path) from the library")
                             }
                         }
                         Button("Add skill folders…", systemImage: "folder.badge.plus") { choose(.extra) }
-                        Text("Each agent’s skills directory is included automatically.").foregroundStyle(PrumoTheme.secondary)
+                        Text("Each agent’s skills directory is included automatically.").foregroundStyle(
+                            PrumoTheme.secondary)
                     }
                 } else {
                     Section {
-                        PathSetting(title: "Codex executable", detail: "Used for session continuation and cited answers.", path: $draft.codexExecutable, directory: false) { choose(.codexExecutable) }
-                        PathSetting(title: "Claude Code executable", detail: "Used for session continuation.", path: $draft.claudeExecutable, directory: false) { choose(.claudeExecutable) }
-                    } header: { Text("Command-line agents") } footer: {
-                        Text("Continuation opens Terminal with the original agent and data folder.").foregroundStyle(PrumoTheme.secondary)
+                        PathSetting(
+                            title: "Codex executable", detail: "Used for session continuation and cited answers.",
+                            path: $draft.codexExecutable, directory: false
+                        ) { choose(.codexExecutable) }
+                        PathSetting(
+                            title: "Claude Code executable", detail: "Used for session continuation.",
+                            path: $draft.claudeExecutable, directory: false
+                        ) { choose(.claudeExecutable) }
+                    } header: {
+                        Text("Command-line agents")
+                    } footer: {
+                        Text("Continuation opens Terminal with the original agent and data folder.").foregroundStyle(
+                            PrumoTheme.secondary)
                     }
                     Section("Cited answers") {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Codex model").font(PrumoTheme.row)
-                            TextField("Use the Codex CLI default", text: $draft.answerModel).labelsHidden().textFieldStyle(.roundedBorder).multilineTextAlignment(.leading)
+                            TextField("Use the Codex CLI default", text: $draft.answerModel).labelsHidden()
+                                .textFieldStyle(.roundedBorder).multilineTextAlignment(.leading)
                                 .accessibilityLabel("Codex model")
-                            Text("Optional. Leave empty to use the CLI default model.").foregroundStyle(PrumoTheme.secondary)
+                            Text("Optional. Leave empty to use the CLI default model.").foregroundStyle(
+                                PrumoTheme.secondary)
                         }
-                        Text("Local search needs no model. Answer with Codex sends only your question and selected excerpts through your existing CLI setup.")
-                            .foregroundStyle(PrumoTheme.secondary)
+                        Text(
+                            "Local search needs no model. Answer with Codex sends only your question and selected excerpts through your existing CLI setup."
+                        )
+                        .foregroundStyle(PrumoTheme.secondary)
                     }
                 }
             }.formStyle(.grouped).font(PrumoTheme.meta).scrollContentBackground(.hidden)
@@ -75,8 +105,13 @@ struct SettingsView: View {
             }.padding(PrumoTheme.contentInset).background(PrumoTheme.panel)
         }
         .frame(width: 740, height: 660).background(PrumoTheme.canvas)
-        .onAppear { draft = model.settings; error = nil }
-        .fileImporter(isPresented: $choosingPath, allowedContentTypes: pathTarget.isDirectory ? [.folder] : [.item], allowsMultipleSelection: pathTarget == .extra) { result in
+        .onAppear {
+            draft = model.settings; error = nil
+        }
+        .fileImporter(
+            isPresented: $choosingPath, allowedContentTypes: pathTarget.isDirectory ? [.folder] : [.item],
+            allowsMultipleSelection: pathTarget == .extra
+        ) { result in
             do {
                 let urls = try result.get()
                 guard let first = urls.first else { return }
@@ -87,7 +122,9 @@ struct SettingsView: View {
                 case .codexExecutable: draft.codexExecutable = first.path
                 case .claudeExecutable: draft.claudeExecutable = first.path
                 case .extra:
-                    for url in urls where !draft.extraSkillRoots.contains(url.path) { draft.extraSkillRoots.append(url.path) }
+                    for url in urls where !draft.extraSkillRoots.contains(url.path) {
+                        draft.extraSkillRoots.append(url.path)
+                    }
                 }
                 error = nil
             } catch { self.error = "Could not select the path. Choose it again or enter it directly." }

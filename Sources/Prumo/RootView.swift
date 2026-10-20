@@ -26,11 +26,14 @@ struct RootView: View {
                                 HStack {
                                     Text("Skill details").font(PrumoTheme.row)
                                     Spacer()
-                                    Button("Close skill details", systemImage: "xmark") { model.selectedSkill = nil; model.skillDetail = nil }
-                                        .labelStyle(.iconOnly).buttonStyle(.borderless)
+                                    Button("Close skill details", systemImage: "xmark") {
+                                        model.selectedSkill = nil; model.skillDetail = nil
+                                    }
+                                    .labelStyle(.iconOnly).buttonStyle(.borderless)
                                 }.padding(PrumoTheme.inset)
                                 Divider()
-                                SkillDetailView(model: model, detail: detail).id(detail.skill.id).disabled(model.isManagingSkills)
+                                SkillDetailView(model: model, detail: detail).id(detail.skill.id).disabled(
+                                    model.isManagingSkills)
                             }.frame(width: 320)
                         }
                     }
@@ -50,9 +53,11 @@ struct RootView: View {
         .navigationTitle("Prumo")
         .toolbar {
             ToolbarItem(id: "refresh", placement: .primaryAction) {
-                Button(model.isScanning ? "Stop refresh" : "Refresh library", systemImage: model.isScanning ? "stop.circle" : "arrow.clockwise") {
-                    if model.isScanning { model.index?.cancelScan() }
-                    else { Task { await model.refresh() } }
+                Button(
+                    model.isScanning ? "Stop refresh" : "Refresh library",
+                    systemImage: model.isScanning ? "stop.circle" : "arrow.clockwise"
+                ) {
+                    if model.isScanning { model.index?.cancelScan() } else { Task { await model.refresh() } }
                 }.labelStyle(.iconOnly)
             }
             ToolbarItem(id: "settings", placement: .primaryAction) {
@@ -64,7 +69,9 @@ struct RootView: View {
         .sheet(isPresented: $model.showCreateSkill) { CreateSkillView(model: model) }
         .alert("Prumo", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
             Button("OK") { model.error = nil }
-        } message: { Text(model.error ?? "") }
+        } message: {
+            Text(model.error ?? "")
+        }
         .task {
             await model.loadSkills()
             await model.refresh()
@@ -107,8 +114,14 @@ struct SidebarView: View {
                     HStack(spacing: 10) {
                         Label(section.title, systemImage: section.symbol)
                         Spacer(minLength: 0)
-                        if section == .sessions { Text(model.stats.sessions.formatted()).monospacedDigit().foregroundStyle(PrumoTheme.rowDetailStyle(selected: model.section == section)) }
-                        if section == .skills { Text(model.skills.count.formatted()).monospacedDigit().foregroundStyle(PrumoTheme.rowDetailStyle(selected: model.section == section)) }
+                        if section == .sessions {
+                            Text(model.stats.sessions.formatted()).monospacedDigit().foregroundStyle(
+                                PrumoTheme.rowDetailStyle(selected: model.section == section))
+                        }
+                        if section == .skills {
+                            Text(model.skills.count.formatted()).monospacedDigit().foregroundStyle(
+                                PrumoTheme.rowDetailStyle(selected: model.section == section))
+                        }
                     }.font(.system(size: 13)).padding(.vertical, 5).tag(section)
                 }
             }.listStyle(.sidebar).scrollContentBackground(.hidden)
@@ -119,10 +132,15 @@ struct SidebarView: View {
                         ForEach(Array(model.scanWarnings.enumerated()), id: \.offset) { _, warning in Text(warning) }
                         Divider()
                         Button("Open source settings…") { openSettings() }
-                    } label: { Label("Source notices", systemImage: "exclamationmark.circle") }
+                    } label: {
+                        Label("Source notices", systemImage: "exclamationmark.circle")
+                    }
                 }
-                Label(model.isScanning ? "Refreshing library…" : "Local library", systemImage: model.isScanning ? "arrow.triangle.2.circlepath" : "internaldrive")
-                    .font(.system(size: 12, weight: .medium))
+                Label(
+                    model.isScanning ? "Refreshing library…" : "Local library",
+                    systemImage: model.isScanning ? "arrow.triangle.2.circlepath" : "internaldrive"
+                )
+                .font(.system(size: 12, weight: .medium))
                 Text(model.scanSummary).font(PrumoTheme.meta).foregroundStyle(PrumoTheme.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }.font(PrumoTheme.meta).padding(PrumoTheme.inset).frame(maxWidth: .infinity, alignment: .leading)
@@ -146,9 +164,13 @@ struct SessionFilters: View {
                 }
             }
             Divider()
-            Button("Clear filters") { model.agentFilter = ""; model.projectFilter = "" }
+            Button("Clear filters") {
+                model.agentFilter = ""; model.projectFilter = ""
+            }
         } label: {
-            Label(model.agentFilter.isEmpty && model.projectFilter.isEmpty ? "Filters" : "Filters applied", systemImage: "line.3.horizontal.decrease")
+            Label(
+                model.agentFilter.isEmpty && model.projectFilter.isEmpty ? "Filters" : "Filters applied",
+                systemImage: "line.3.horizontal.decrease")
         }.help([model.agentFilter, model.projectFilter].filter { !$0.isEmpty }.joined(separator: " · "))
     }
 }
@@ -171,7 +193,9 @@ struct LibrarySearchField: View {
 struct WelcomeView: View {
     @Bindable var model: AppModel
     var body: some View {
-        EmptyPanel(symbol: "text.bubble", title: "Select a conversation", message: "Read a session, find a passage, or continue where you left off.")
+        EmptyPanel(
+            symbol: "text.bubble", title: "Select a conversation",
+            message: "Read a session, find a passage, or continue where you left off.")
     }
 }
 

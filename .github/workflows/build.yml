@@ -6,6 +6,8 @@ on:
     branches: [main]
     tags: ['v*']
   workflow_dispatch:
+  schedule:
+    - cron: '23 10 * * 1'
 
 permissions:
   contents: read
@@ -15,8 +17,33 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  quality:
+    name: Workflow, shell, and dependency checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install verified quality tools
+        run: |
+          bash scripts/install-quality-tools.sh "$RUNNER_TEMP/prumo-quality-bin"
+          echo "$RUNNER_TEMP/prumo-quality-bin" >> "$GITHUB_PATH"
+      - name: Check workflows and shell scripts
+        run: |
+          actionlint -version
+          shellcheck --version
+          actionlint
+          shellcheck scripts/*.sh
+      - name: Audit Cargo dependencies
+        run: |
+          cargo-audit --version
+          cargo-audit audit --file core/Cargo.lock
+
   build:
     name: Test and package Apple Silicon
+    if: github.event_name != 'schedule'
+    needs: quality
     runs-on: macos-26
     timeout-minutes: 30
     env:
@@ -26,6 +53,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install pinned Swift toolchain
+        run: |
+          bash scripts/install-swift-toolchain.sh "$RUNNER_TEMP/prumo-swift"
+          echo "$RUNNER_TEMP/prumo-swift/usr/bin" >> "$GITHUB_PATH"
       - name: Check build environment
         run: |
           test "$(uname -m)" = arm64

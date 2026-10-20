@@ -87,7 +87,6 @@ struct SectionLabel: View {
     }
 }
 
-
 extension View {
     func prumoPrimaryAction() -> some View {
         buttonStyle(.borderedProminent).tint(PrumoTheme.accent)

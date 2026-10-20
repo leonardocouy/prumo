@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH:/opt/homebrew/bin"
 if [[ "$(uname -s)" != "Darwin" || "$(uname -m)" != "arm64" ]]; then
     echo "Build Prumo on an Apple Silicon Mac. Only macOS ARM64 is supported." >&2
     exit 1

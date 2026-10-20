@@ -27,7 +27,7 @@ The first launch uses `CODEX_HOME` and `CLAUDE_CONFIG_DIR` when supplied. Otherw
 
 ## Interface
 
-Version 0.3.0 uses a light native interface with a compact sidebar and consistent text and spacing.
+Prumo uses a light native interface with a compact sidebar and consistent text and spacing.
 
 - Sessions use a compact results column beside the conversation. Filters and ordering stay with the search.
 - Skills use a table with agent access, recorded uses, and approximate added dates. Select a row to open its detail panel. Checkboxes select bulk actions.
@@ -90,7 +90,8 @@ Legacy shell detection accepts single literal `cat`, `head`, `tail`, and non-in-
 ## Build
 
 Requirements: Apple Silicon Mac, macOS 15 or later, Rustup, and Apple's Swift Command Line Tools.
-The repository selects Rust 1.99.1. Cargo uses the dependencies pinned in `core/Cargo.lock`.
+The repository selects Rust 1.99.1 and Swift 6.4.1. Cargo uses the dependencies pinned in `core/Cargo.lock`.
+Follow [BUILDING.md](BUILDING.md) to install the pinned Swift compiler if your Command Line Tools include an older version.
 
 ```sh
 cargo install cargo-about --version 0.9.2 --locked --features cli

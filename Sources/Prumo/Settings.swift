@@ -16,7 +16,8 @@ struct AppSettings: Codable, Equatable, Sendable {
         let claudeWork = home + "/.claude-work"
         return AppSettings(
             codexHome: environment["CODEX_HOME"] ?? home + "/.codex",
-            claudeHome: environment["CLAUDE_CONFIG_DIR"] ?? (FileManager.default.fileExists(atPath: claudeWork) ? claudeWork : home + "/.claude"),
+            claudeHome: environment["CLAUDE_CONFIG_DIR"]
+                ?? (FileManager.default.fileExists(atPath: claudeWork) ? claudeWork : home + "/.claude"),
             sharedSkills: home + "/.agents/skills", extraSkillRoots: [],
             codexExecutable: Executables.locate("codex"),
             claudeExecutable: Executables.locate("claude"), answerModel: ""
@@ -25,12 +26,17 @@ struct AppSettings: Codable, Equatable, Sendable {
 
     static func load() -> AppSettings {
         guard let data = UserDefaults.standard.data(forKey: "settings"),
-              let value = try? JSONDecoder().decode(AppSettings.self, from: data) else { return defaults }
+            let value = try? JSONDecoder().decode(AppSettings.self, from: data)
+        else { return defaults }
         return value
     }
 
     func validate() throws {
-        let folders = [("Codex data folder", codexHome), ("Claude Code data folder", claudeHome), ("Shared skills folder", sharedSkills)]
+        let folders =
+            [
+                ("Codex data folder", codexHome), ("Claude Code data folder", claudeHome),
+                ("Shared skills folder", sharedSkills),
+            ]
             + extraSkillRoots.map { ("Additional skill folder", $0) }
         for (name, path) in folders {
             guard expanded(path).hasPrefix("/") else {
@@ -48,22 +54,32 @@ struct AppSettings: Codable, Equatable, Sendable {
     }
 
     var sources: [AgentSource] {
-        [AgentSource(agent: "codex", root: expanded(codexHome)), AgentSource(agent: "claude", root: expanded(claudeHome))]
+        [
+            AgentSource(agent: "codex", root: expanded(codexHome)),
+            AgentSource(agent: "claude", root: expanded(claudeHome)),
+        ]
     }
 
     var skillRoots: [String] {
-        Array(Set(([sharedSkills, expanded(codexHome) + "/skills", expanded(claudeHome) + "/skills"] + extraSkillRoots).map(expanded))).sorted()
+        Array(
+            Set(
+                ([sharedSkills, expanded(codexHome) + "/skills", expanded(claudeHome) + "/skills"] + extraSkillRoots)
+                    .map(expanded))
+        ).sorted()
     }
 
     func makeSkillStore() -> SkillStore {
-        SkillStore(roots: skillRoots, codexSkills: expanded(codexHome) + "/skills", claudeSkills: expanded(claudeHome) + "/skills", sharedSkills: expanded(sharedSkills))
+        SkillStore(
+            roots: skillRoots, codexSkills: expanded(codexHome) + "/skills",
+            claudeSkills: expanded(claudeHome) + "/skills", sharedSkills: expanded(sharedSkills))
     }
 }
 
 enum Executables {
     static func locate(_ name: String) -> String {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let directories = ["/opt/homebrew/bin", "/usr/local/bin", home + "/.local/bin", home + "/.cargo/bin"]
+        let directories =
+            ["/opt/homebrew/bin", "/usr/local/bin", home + "/.local/bin", home + "/.cargo/bin"]
             + (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map(String.init)
         return directories.map { $0 + "/" + name }.first(where: FileManager.default.isExecutableFile) ?? name
     }
@@ -80,11 +96,9 @@ extension SearchHit {
     public var id: String { session.key }
 }
 
-
 extension SessionMessage {
     public var id: UInt32 { index }
 }
-
 
 extension SkillRow {
     var addedDate: Date? { addedMs.map { Date(timeIntervalSince1970: Double($0) / 1000) } }
