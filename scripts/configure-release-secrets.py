@@ -8,6 +8,18 @@ import subprocess
 import sys
 
 
+def validate_certificate(path, password):
+    environment = os.environ.copy()
+    environment["PRUMO_P12_PASSWORD"] = password
+    result = subprocess.run(
+        ["/usr/bin/openssl", "pkcs12", "-in", str(path), "-passin", "env:PRUMO_P12_PASSWORD", "-noout"],
+        env=environment, capture_output=True, text=True,
+    )
+    if result.returncode:
+        detail = result.stderr.strip().replace(password, "[REDACTED]") if password else result.stderr.strip()
+        raise ValueError(f"Certificate validation failed:\n{detail}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Store Apple signing credentials in a repository's encrypted GitHub Actions secrets.")
     parser.add_argument("--repo", required=True, help="GitHub owner/repository")
@@ -15,6 +27,8 @@ def main():
     parser.add_argument("--apple-id", required=True)
     parser.add_argument("--team-id", required=True)
     args = parser.parse_args()
+    if sys.platform != "darwin":
+        raise ValueError("Run this setup on macOS.")
     if not sys.stdin.isatty():
         raise ValueError("Run this setup in an interactive terminal so password entry stays hidden.")
     subprocess.run(["gh", "auth", "status"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -25,14 +39,7 @@ def main():
     password = getpass.getpass("Certificate backup password: ")
     if not password:
         raise ValueError("The certificate backup password cannot be empty.")
-    environment = os.environ.copy()
-    environment["PRUMO_P12_PASSWORD"] = password
-    result = subprocess.run(
-        ["openssl", "pkcs12", "-in", str(args.certificate.expanduser()), "-passin", "env:PRUMO_P12_PASSWORD", "-noout"],
-        env=environment, capture_output=True,
-    )
-    if result.returncode:
-        raise ValueError("Cannot open the certificate backup. Check the file and its password.")
+    validate_certificate(args.certificate.expanduser(), password)
     app_password = getpass.getpass("Apple app-specific password for notarization: ")
     if not app_password:
         raise ValueError("The app-specific password cannot be empty.")

@@ -17,3 +17,4 @@ swiftc -parse-as-library -swift-version 6 \
     core/target/aarch64-apple-darwin/release/libprumo_core.a \
     -o .build/native-checks
 .build/native-checks
+python3 -m unittest discover -s Tests -p 'test_release_secrets.py'

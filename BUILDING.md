@@ -117,6 +117,8 @@ python3 scripts/configure-release-secrets.py \
 ```
 
 Run it in an interactive terminal with an authenticated GitHub CLI. It does not store passwords in project files.
+The first prompt uses the `.p12` export password. The second uses Apple's app-specific password.
+The helper validates `.p12` exports with macOS's bundled `/usr/bin/openssl`, independent of Homebrew tools on `PATH`.
 
 The tag build runs `bash scripts/release.sh` after the ordinary build and tests.
 It imports the identity into a temporary keychain, checks the expected team, and validates notarization credentials.

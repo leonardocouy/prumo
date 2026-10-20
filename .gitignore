@@ -3,6 +3,7 @@
 core/target/
 dist/
 .DS_Store
+__pycache__/
 Sources/PrumoCore/*.swift
 Sources/PrumoCoreFFI/*.h
 Sources/PrumoCoreFFI/module.modulemap
