@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Prumo</title>
+  <desc id="desc">An ink blue P with a copper plumb line on warm white.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FFFEFA"/>
+      <stop offset="1" stop-color="#EEEAE1"/>
+    </linearGradient>
+    <linearGradient id="copper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#CD9066"/>
+      <stop offset="1" stop-color="#9F5836"/>
+    </linearGradient>
+  </defs>
+  <rect x="36" y="36" width="952" height="952" rx="215" fill="url(#paper)"/>
+  <rect x="37" y="37" width="950" height="950" rx="214" fill="none" stroke="#DBD6CA" stroke-opacity=".7" stroke-width="2"/>
+  <path fill="#243E51" fill-rule="evenodd" d="M286 758V270H540C672 270 746 345 746 453S672 636 540 636H414V758ZM414 390V516H532C589 516 620 494 620 453S589 390 532 390Z"/>
+  <path d="M534 426V667" fill="none" stroke="#B87850" stroke-width="16" stroke-linecap="round"/>
+  <path d="M534 620 595 692 534 782 473 692Z" fill="url(#copper)"/>
+  <path d="M534 620V782L473 692Z" fill="#D49B73" fill-opacity=".45"/>
+</svg>

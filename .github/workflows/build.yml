@@ -1,0 +1,83 @@
+name: Build and release
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Test and package Apple Silicon
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check build environment
+        run: |
+          test "$(uname -m)" = arm64
+          swift --version
+          rustc --version
+          cargo --version
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/registry/src
+            ~/.cargo/git/db
+            ~/.cargo/bin/cargo-about
+            core/target
+          key: macos-arm64-rust-${{ hashFiles('rust-toolchain.toml', 'core/Cargo.lock') }}-cargo-about-0.9.2
+      - name: Install license report tool
+        run: cargo install cargo-about --version 0.9.2 --locked --features cli
+      - name: Build and test
+        run: bash scripts/test.sh
+      - name: Package and verify
+        env:
+          RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+        run: bash scripts/package.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Prumo-macos-arm64
+          path: dist/release/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish preview release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: Prumo-macos-arm64
+          path: release
+      - name: Check assets and publish
+        working-directory: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          sha256sum --check SHA256SUMS.txt
+          gh release create "$RELEASE_TAG" --verify-tag --prerelease \
+            --title "Prumo $RELEASE_TAG · Apple Silicon preview" \
+            --notes-file RELEASE_NOTES.md ./*.zip ./*.dmg SHA256SUMS.txt

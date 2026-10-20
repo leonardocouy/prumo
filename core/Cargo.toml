@@ -1,0 +1,30 @@
+[package]
+name = "prumo_core"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/leonardocouy/prumo"
+publish = false
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bin/uniffi-bindgen.rs"
+required-features = ["bindgen"]
+
+[features]
+bindgen = ["uniffi/cli"]
+
+[dependencies]
+uniffi = "=0.32.2"
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+thiserror = "2.0.21"
+walkdir = "2.5.0"
+chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+tempfile = "3.27.0"

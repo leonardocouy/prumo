@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Prumo dependency licenses</title>
+<style>body{font:16px system-ui;max-width:900px;margin:40px auto;padding:0 24px}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<h1>Prumo dependency licenses</h1>
+<p>Third-party components retain their own licenses. Package versions and source links appear below. Cargo.lock records their checksums.</p>
+<p>For the corresponding source, download the listed package version from crates.io or run <code>cargo vendor --locked --manifest-path core/Cargo.toml</code> from the Prumo source repository.</p>
+{{#each licenses}}
+<section>
+<h2>{{name}}</h2>
+<ul>
+{{#each used_by}}
+<li><a href="https://crates.io/crates/{{crate.name}}/{{crate.version}}">{{crate.name}} {{crate.version}}</a>{{#if crate.repository}} — <a href="{{crate.repository}}">Source repository</a>{{/if}}</li>
+{{/each}}
+</ul>
+<pre>{{text}}</pre>
+</section>
+{{/each}}
+</html>

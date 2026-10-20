@@ -1,0 +1,4 @@
+[bindings.swift]
+module_name = "PrumoCore"
+ffi_module_name = "PrumoCoreFFI"
+generate_module_map = true
