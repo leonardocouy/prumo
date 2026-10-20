@@ -59,7 +59,8 @@ bash scripts/package.sh
 
 This creates a ZIP, a DMG, and `SHA256SUMS.txt` under `dist/release`.
 The script extracts and checks the ZIP before packaging completes. It also verifies the DMG.
-Set `RELEASE_TAG=v0.3.1` to enforce a match with the version in `scripts/Info.plist`.
+Set `RELEASE_TAG` only for a signed, notarized release. It must match the version in `scripts/Info.plist`.
+For example, `RELEASE_TAG=v0.3.2` requires version `0.3.2` and the signing configuration below.
 
 ## GitHub Actions
 
@@ -67,8 +68,8 @@ Pull requests and pushes to `main` build, test, and package the app on a `macos-
 The workflow uses the stable Xcode 26.6 SDK, the official Swift 6.4.1 compiler, and the pinned Rust toolchain.
 Action versions are pinned by commit. Dependabot checks Cargo and GitHub Actions each week.
 
-A pushed `v*` tag also publishes a prerelease after the build passes.
-Only that publishing job receives repository write permission. Builds do not need signing credentials.
+A pushed `v*` tag also publishes a prerelease after the build, signing, and notarization checks pass.
+Only the publishing job receives repository write permission. Pull requests and branch builds do not receive signing credentials.
 The release job checks SHA-256 sums before uploading the ZIP and DMG.
 
 A separate Ubuntu job checks workflow syntax with actionlint 1.7.12, shell scripts with ShellCheck 0.11.0, and vulnerabilities with cargo-audit 0.22.2.
@@ -85,8 +86,68 @@ To apply Swift formatting locally:
 swift format format --in-place --recursive Sources/Prumo Tests Package.swift scripts/make-icon.swift
 ```
 
-Local and automated builds use ad hoc signing. They are not Developer ID signed or notarized.
-Public distribution without Gatekeeper prompts requires Developer ID signing and Apple's notarization service.
+Local builds and ordinary CI artifacts use ad hoc signing. They are not notarized.
+Starting with v0.3.2, public tag releases require Developer ID signing and Apple notarization.
+Missing credentials, rejected submissions, missing tickets, or failed verification stop publication.
+
+## Signed releases
+
+Configure these GitHub Actions secrets in the Prumo repository:
+
+| Secret | Value |
+| --- | --- |
+| `APPLE_CERTIFICATE` | Base64-encoded `.p12` containing a Developer ID Application certificate and its private key. |
+| `APPLE_CERTIFICATE_PASSWORD` | Password used to encrypt that `.p12`. |
+| `APPLE_ID` | Apple Account email for notarization. |
+| `APPLE_ID_PASSWORD` | Apple app-specific password for notarization. |
+| `APPLE_TEAM_ID` | Developer team that owns the signing certificate. |
+
+These names match Claudometer's Apple credential names. Prumo generates its temporary keychain password on each run.
+Credentials remain outside Git and release assets. Share them only through GitHub's encrypted Actions secrets.
+The Apple Account must belong to the signing team. App Store publication is not required.
+
+The setup helper prompts for both passwords privately and asks before uploading the five credentials:
+
+```sh
+python3 scripts/configure-release-secrets.py \
+  --repo OWNER/REPOSITORY \
+  --certificate /path/to/Developer-ID.p12 \
+  --apple-id YOUR_APPLE_ACCOUNT_EMAIL \
+  --team-id YOUR_TEAM_ID
+```
+
+Run it in an interactive terminal with an authenticated GitHub CLI. It does not store passwords in project files.
+
+The tag build runs `bash scripts/release.sh` after the ordinary build and tests.
+It imports the identity into a temporary keychain, checks the expected team, and validates notarization credentials.
+The keychain, imported certificate, and credential profile are removed when the release script exits.
+The script verifies Apple's G2 intermediate certificate against a pinned checksum and Apple's trusted root before import.
+
+Packaging signs the app with hardened runtime and a secure timestamp, then submits it to Apple.
+After acceptance, it staples the app ticket and creates the final ZIP from that app.
+It then signs, notarizes, and staples the DMG separately.
+The extracted ZIP and mounted DMG must pass signature, ticket, architecture, resource, and Gatekeeper checks.
+Checksums are calculated after stapling completes. The publishing job receives only the verified release files.
+
+To package a release locally with an existing signing identity and saved notarization profile:
+
+```sh
+RELEASE_TAG=v0.3.2 \
+SIGNING_IDENTITY="YOUR_DEVELOPER_ID_CERTIFICATE_SHA1" \
+NOTARY_PROFILE="YOUR_SAVED_NOTARY_PROFILE" \
+APPLE_TEAM_ID="YOUR_TEAM_ID" \
+bash scripts/package.sh
+```
+
+Build first with `bash scripts/build.sh`. Packaging checks that the tag matches the source and bundle versions.
+Use `SIGNING_KEYCHAIN` only when the identity and notarization profile are stored in a separate keychain.
+Do not put passwords in commands, repository files, or issue comments.
+
+For a manual verification of a notarized bundle:
+
+```sh
+APPLE_TEAM_ID="YOUR_TEAM_ID" bash scripts/verify-bundle.sh dist/Prumo.app --notarized
+```
 
 ## Update dependencies
 

@@ -102,7 +102,8 @@ open dist/Prumo.app
 The build compiles Rust, generates UniFFI bindings, compiles the SwiftUI/AppKit app, and creates an ad hoc signed bundle. The Rust library is linked statically. No separate runtime library is required in the app bundle.
 
 Intel Macs are not supported. See [BUILDING.md](BUILDING.md) for tests, ZIP and DMG packaging, and GitHub Actions.
-Downloaded previews are not notarized by Apple. Gatekeeper can block them. Building from source is an alternative.
+Starting with v0.3.2, tagged releases require Developer ID signing and Apple notarization before publication.
+Earlier previews and ordinary CI artifacts use ad hoc signing. Local source builds do not require signing credentials.
 
 Regenerate the original app icon when needed:
 
