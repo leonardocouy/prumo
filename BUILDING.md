@@ -60,7 +60,7 @@ bash scripts/package.sh
 This creates a ZIP, a DMG, and `SHA256SUMS.txt` under `dist/release`.
 The script extracts and checks the ZIP before packaging completes. It also verifies the DMG.
 Set `RELEASE_TAG` only for a signed, notarized release. It must match the version in `scripts/Info.plist`.
-For example, `RELEASE_TAG=v0.3.3` requires version `0.3.3` and the signing configuration below.
+For example, `RELEASE_TAG=v0.3.4` requires version `0.3.4` and the signing configuration below.
 
 ## GitHub Actions
 
@@ -124,6 +124,7 @@ The tag build runs `bash scripts/release.sh` after the ordinary build and tests.
 It imports the identity into a temporary keychain, checks the expected team, and validates notarization credentials.
 The keychain, imported certificate, and credential profile are removed when the release script exits.
 The script verifies Apple's G2 intermediate certificate against a pinned checksum and Apple's trusted root before import.
+It adds the temporary keychain to the signing search list and restores the original list during cleanup.
 
 Packaging signs the app with hardened runtime and a secure timestamp, then submits it to Apple.
 After acceptance, it staples the app ticket and creates the final ZIP from that app.
@@ -134,7 +135,7 @@ Checksums are calculated after stapling completes. The publishing job receives o
 To package a release locally with an existing signing identity and saved notarization profile:
 
 ```sh
-RELEASE_TAG=v0.3.3 \
+RELEASE_TAG=v0.3.4 \
 SIGNING_IDENTITY="YOUR_DEVELOPER_ID_CERTIFICATE_SHA1" \
 NOTARY_PROFILE="YOUR_SAVED_NOTARY_PROFILE" \
 APPLE_TEAM_ID="YOUR_TEAM_ID" \

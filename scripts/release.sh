@@ -16,7 +16,16 @@ if [[ "$RELEASE_TAG" != "v$version" ]]; then
 fi
 staging="$(mktemp -d "$RUNNER_TEMP/prumo-signing.XXXXXX")"
 export SIGNING_KEYCHAIN="$staging/signing.keychain-db"
+original_keychains=()
+keychain_paths="$(security list-keychains -d user | python3 -c 'import shlex, sys; print("\n".join(shlex.split(sys.stdin.read())))')"
+while IFS= read -r keychain; do
+    if [[ -n "$keychain" ]]; then
+        original_keychains+=("$keychain")
+    fi
+done <<< "$keychain_paths"
 cleanup() {
+    security list-keychains -d user -s ${original_keychains[@]+"${original_keychains[@]}"} \
+        || echo "Could not restore the original keychain search list." >&2
     if [[ -f "$SIGNING_KEYCHAIN" ]]; then
         security delete-keychain "$SIGNING_KEYCHAIN" || echo "Could not remove the temporary signing keychain." >&2
     fi
@@ -34,6 +43,7 @@ Path(sys.argv[1]).write_bytes(base64.b64decode(encoded, validate=True))
 PY
 keychain_password="$(openssl rand -hex 32)"
 security create-keychain -p "$keychain_password" "$SIGNING_KEYCHAIN"
+security list-keychains -d user -s "$SIGNING_KEYCHAIN" ${original_keychains[@]+"${original_keychains[@]}"}
 security set-keychain-settings -lut 21600 "$SIGNING_KEYCHAIN"
 security unlock-keychain -p "$keychain_password" "$SIGNING_KEYCHAIN"
 security import "$staging/certificate.p12" -k "$SIGNING_KEYCHAIN" \
