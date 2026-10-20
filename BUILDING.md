@@ -60,7 +60,7 @@ bash scripts/package.sh
 This creates a ZIP, a DMG, and `SHA256SUMS.txt` under `dist/release`.
 The script extracts and checks the ZIP before packaging completes. It also verifies the DMG.
 Set `RELEASE_TAG` only for a signed, notarized release. It must match the version in `scripts/Info.plist`.
-For example, `RELEASE_TAG=v0.3.2` requires version `0.3.2` and the signing configuration below.
+For example, `RELEASE_TAG=v0.3.3` requires version `0.3.3` and the signing configuration below.
 
 ## GitHub Actions
 
@@ -134,7 +134,7 @@ Checksums are calculated after stapling completes. The publishing job receives o
 To package a release locally with an existing signing identity and saved notarization profile:
 
 ```sh
-RELEASE_TAG=v0.3.2 \
+RELEASE_TAG=v0.3.3 \
 SIGNING_IDENTITY="YOUR_DEVELOPER_ID_CERTIFICATE_SHA1" \
 NOTARY_PROFILE="YOUR_SAVED_NOTARY_PROFILE" \
 APPLE_TEAM_ID="YOUR_TEAM_ID" \

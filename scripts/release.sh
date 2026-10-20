@@ -46,7 +46,22 @@ curl --fail --silent --show-error --location --proto '=https' \
 printf '%s  %s\n' f16cd3c54c7f83cea4bf1a3e6a0819c8aaa8e4a1528fd144715f350643d2df3a \
     "$staging/AppleG2.cer" | shasum -a 256 --check
 security verify-cert -c "$staging/AppleG2.cer" -p basic
-security import "$staging/AppleG2.cer" -k "$SIGNING_KEYCHAIN"
+python3 - "$SIGNING_KEYCHAIN" "$staging/AppleG2.cer" <<'PY'
+import base64
+from pathlib import Path
+import re
+import subprocess
+import sys
+keychain, certificate = sys.argv[1:]
+result = subprocess.run(['security', 'find-certificate', '-a', '-p', keychain],
+                        check=True, capture_output=True, text=True).stdout
+installed = [base64.b64decode(value) for value in re.findall(
+    r'-----BEGIN CERTIFICATE-----\s*(.*?)\s*-----END CERTIFICATE-----', result, re.S)]
+if Path(certificate).read_bytes() not in installed:
+    subprocess.run(['security', 'import', certificate, '-k', keychain], check=True)
+else:
+    print('Verified Apple G2 intermediate is already included in the signing backup.')
+PY
 SIGNING_IDENTITY="$(python3 - "$SIGNING_KEYCHAIN" "$APPLE_TEAM_ID" <<'PY'
 import re
 import subprocess
